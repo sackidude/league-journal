@@ -3,14 +3,18 @@
 {{ #each games }}
 ## Game {{ this.num }}: {{ this.ally_champ }} vs {{ this.enemy_champ }}
 
-### win/loss: {{ this.scoreline }}
+### Game info
 
-#### Notes:
+{{#if this.win }}Win{{else}}Loss{{/if}}: {{ this.kda.kills }}/{{ this.kda.deaths }}/{{ this.kda.assists }}
 
-1. *Start typing here.*
+Duration: {{ this.duration }}
 
-#### Main takeaways:
+### Notes:
 
-* *Start typing here.*
+1. _Start typing here._
+
+### Main takeaways:
+
+- _Start typing here._
 
 {{ /each }}

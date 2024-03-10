@@ -6,3 +6,5 @@ Cargo.lock
 **/*.rs.bk
 
 .pdb
+# Ignore the generated results
+20*/*/*.md 
