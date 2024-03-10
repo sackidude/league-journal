@@ -1,11 +1,36 @@
 use chrono::Datelike;
 use reqwest::header::{HeaderMap, ACCEPT, ACCEPT_LANGUAGE, CONNECTION, COOKIE, DNT, USER_AGENT};
+use scraper::selectable::Selectable;
 use serde::Serialize;
 use serde_json::value::{Map, Value as Json};
 
 use std::{fs::File, path::Path};
 
 use handlebars::{to_json, Handlebars};
+
+#[derive(Debug)]
+enum Role {
+    Top,
+    Jungle,
+    Mid,
+    Bottom,
+    Support,
+}
+
+const GAMES_IN_BLOCK: u8 = 3;
+const ROLE: Role = Role::Jungle;
+
+impl Role {
+    fn value(&self) -> u8 {
+        match self {
+            Role::Top => 0,
+            Role::Jungle => 1,
+            Role::Mid => 2,
+            Role::Bottom => 3,
+            Role::Support => 4,
+        }
+    }
+}
 
 #[derive(Serialize, Debug)]
 struct Kda {
@@ -80,8 +105,6 @@ async fn fetch_data() -> Map<String, Json> {
 
     let document = scraper::Html::parse_document(&res);
 
-    std::fs::write("./league-of-graphs.html", &res).unwrap();
-
     let tbody_selector = scraper::Selector::parse(
         "table.data_table.relative.recentGamesTable.inverted_rows_color>tbody",
     )
@@ -93,18 +116,23 @@ async fn fetch_data() -> Map<String, Json> {
     let deaths_selector = scraper::Selector::parse("span.deaths").unwrap();
     let assists_selector = scraper::Selector::parse("span.assists").unwrap();
     let duration_selector = scraper::Selector::parse(".gameDuration").unwrap();
-    let ally_champ_selector = scraper::Selector::parse("img").unwrap();
+    let champ_img_selector = scraper::Selector::parse("img").unwrap();
     let victory_defeat_selector = scraper::Selector::parse(".victoryDefeatText").unwrap();
+    let summoner_column_selector = scraper::Selector::parse(".summonerColumn").unwrap();
 
     let tbody = document.select(&tbody_selector).next().unwrap();
 
     let mut games: Vec<Game> = vec![];
 
-    for (tr, tr_num) in tbody.select(&tr_selector).zip(1..6) {
-        if tr_num < 2 {
+    const USELESS_DIV_COUNT: u8 = 2;
+    for (tr, tr_num) in tbody
+        .select(&tr_selector)
+        .zip(1..GAMES_IN_BLOCK + USELESS_DIV_COUNT + 1)
+    {
+        if tr_num < USELESS_DIV_COUNT {
             continue;
         }
-        let num = tr_num - 2;
+        let num = GAMES_IN_BLOCK + USELESS_DIV_COUNT + 1 - tr_num; // element 0 and 1 are dubious
         let duration = match tr.select(&duration_selector).next() {
             Some(selected) => selected.inner_html().trim().to_string(),
             None => {
@@ -140,7 +168,7 @@ async fn fetch_data() -> Map<String, Json> {
         };
 
         let ally_champ = tr
-            .select(&ally_champ_selector)
+            .select(&champ_img_selector)
             .next()
             .unwrap()
             .attr("alt")
@@ -154,20 +182,29 @@ async fn fetch_data() -> Map<String, Json> {
             .inner_html()
             == "Victory";
 
-        println!(
-            "Game num: {}, duration: {:#?}, kda: {:#?}, ally_champ: {}",
-            num, duration, kda, &ally_champ
-        );
+        let enemy_div = tr
+            .select(&summoner_column_selector)
+            .nth(ROLE.value().into())
+            .unwrap();
+
+        let enemy_champ = enemy_div
+            .select(&champ_img_selector)
+            .nth(1)
+            .unwrap()
+            .attr("alt")
+            .unwrap()
+            .to_string();
 
         games.push(Game {
             num,
             ally_champ,
-            enemy_champ: "todo!".to_string(),
+            enemy_champ,
             win,
             kda,
             duration,
         })
     }
+    games.reverse();
 
     data.insert("games".to_string(), to_json(&games));
     data
