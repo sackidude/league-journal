@@ -24,6 +24,8 @@ enum Role {
 const GAMES_IN_BLOCK: u8 = 3;
 const ROLE: Role = Role::Jungle;
 
+struct ParseError;
+
 impl Role {
     fn value(&self) -> u8 {
         match self {
@@ -32,6 +34,17 @@ impl Role {
             Role::Mid => 2,
             Role::Bottom => 3,
             Role::Support => 4,
+        }
+    }
+
+    fn from_str(input: &str) -> Result<Role, ParseError> {
+        match input {
+            "top" => Ok(Role::Top),
+            "jungle" => Ok(Role::Jungle),
+            "mid" => Ok(Role::Mid),
+            "bottom" => Ok(Role::Bottom),
+            "support" => Ok(Role::Support),
+            _ => Err(ParseError {}),
         }
     }
 }
