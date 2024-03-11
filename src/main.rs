@@ -4,7 +4,11 @@ use scraper::selectable::Selectable;
 use serde::Serialize;
 use serde_json::value::{Map, Value as Json};
 
-use std::{fs::File, path::Path};
+use std::{
+    fs::File,
+    io::{self, Write},
+    path::Path,
+};
 
 use handlebars::{to_json, Handlebars};
 
@@ -182,18 +186,28 @@ async fn fetch_data() -> Map<String, Json> {
             .inner_html()
             == "Victory";
 
-        let enemy_div = tr
-            .select(&summoner_column_selector)
-            .nth(ROLE.value().into())
-            .unwrap();
+        let left_div = tr.select(&summoner_column_selector).next().unwrap();
 
-        let enemy_champ = enemy_div
+        let mut enemy_champ = left_div
             .select(&champ_img_selector)
-            .nth(1)
+            .nth(ROLE.value().into())
             .unwrap()
             .attr("alt")
             .unwrap()
             .to_string();
+
+        if enemy_champ == ally_champ {
+            enemy_champ = tr
+                .select(&summoner_column_selector)
+                .nth(1)
+                .unwrap()
+                .select(&champ_img_selector)
+                .nth(ROLE.value().into())
+                .unwrap()
+                .attr("alt")
+                .unwrap()
+                .to_string();
+        }
 
         games.push(Game {
             num,
@@ -214,8 +228,6 @@ async fn fetch_data() -> Map<String, Json> {
 async fn main() {
     let mut handlebars = Handlebars::new();
 
-    let data = fetch_data().await;
-
     handlebars
         .register_template_file("template", "./templates/template.hbs")
         .unwrap();
@@ -227,10 +239,26 @@ async fn main() {
 
     let path = dir_path.join(format!("{}.md", now.day().to_string()));
 
+    if std::path::Path::exists(&path) {
+        print!("File already exists, do you want to overwrite it [Y/n]: ");
+        io::stdout().flush().unwrap();
+        let mut buffer_str = String::new();
+        match io::stdin().read_line(&mut buffer_str) {
+            Ok(_) => {
+                let choice = buffer_str.trim();
+                if choice == "n" {
+                    panic!("File not overwriting.")
+                }
+            }
+            Err(why) => panic!("Failed to read from buffer: {why}"),
+        }
+    }
+
     let output_file = match File::create(&path) {
         Err(why) => panic!("Failed to create output file {}: {}", &path.display(), why),
         Ok(f) => f,
     };
+    let data = fetch_data().await;
     let _ = handlebars.render_to_write("template", &data, &output_file);
     println!("Generated {}", path.display());
 }
