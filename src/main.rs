@@ -26,7 +26,7 @@ async fn main() {
     let mut handlebars = Handlebars::new();
 
     handlebars
-        .register_template_file("template", "./templates/template.hbs")
+        .register_template_file("template", "./template.hbs")
         .expect("Couldn't find template file");
 
     let now = chrono::offset::Local::now();
