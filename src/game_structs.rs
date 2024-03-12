@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Role {
     Top,
     Jungle,
@@ -57,6 +57,7 @@ pub struct Session {
     pub games: Vec<Game>,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Player {
     pub username: String,
     pub tag: String,

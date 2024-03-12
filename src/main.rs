@@ -6,24 +6,21 @@ use std::{
 
 use handlebars::Handlebars;
 
+mod config;
 mod fetcher;
 mod game_structs;
 
 #[tokio::main]
 async fn main() {
-    let username = "chaoborus".to_string();
-    let tag = "spec".to_string();
-    let region = "euw".to_string();
-    let role = game_structs::Role::from_str(&"Jungle".to_lowercase())
-        .expect("Failed to parse string as a role");
-    let block_game_count: u8 = 3;
-    let player = game_structs::Player {
-        username,
-        tag,
-        region,
-        role,
-        block_game_count,
+    let player = match config::fetch_config() {
+        Some(player) => player,
+        None => {
+            let player = config::get_manual_config();
+            player.save_config();
+            player
+        }
     };
+
     let data = fetcher::fetch_data(&player).await.unwrap();
 
     let mut handlebars = Handlebars::new();

@@ -8,3 +8,5 @@ Cargo.lock
 .pdb
 # Ignore the generated results
 20*/*/*.md 
+# Ignore the generated config
+config.json
