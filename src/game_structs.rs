@@ -57,7 +57,7 @@ pub struct Session {
     pub games: Vec<Game>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Player {
     pub username: String,
     pub tag: String,
@@ -68,7 +68,7 @@ pub struct Player {
 
 impl Player {
     // https://www.leagueofgraphs.com/summoner/euw/Chaoborus-Spec
-    pub fn get_url_from_player(&self) -> String {
+    pub fn get_url(&self) -> String {
         format!(
             "https://www.leagueofgraphs.com/summoner/{}/{}-{}",
             self.region, self.username, self.tag
