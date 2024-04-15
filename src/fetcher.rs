@@ -32,8 +32,10 @@ pub async fn fetch_data(player: &crate::game_structs::Player) -> Result<Map<Stri
 
     let client = reqwest::Client::new();
 
+    let url = player.get_url();
+
     let res = client
-        .get(player.get_url_from_player())
+        .get(&url)
         .headers(headers)
         .send()
         .await
