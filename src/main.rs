@@ -26,7 +26,26 @@ async fn main() {
     let mut handlebars = Handlebars::new();
 
     handlebars
-        .register_template_file("template", "./template.hbs")
+        .register_template_string("normal", r#"# Review for {{ date }}
+
+{{ #each games }}
+## Game {{ this.num }}: {{ this.ally_champ }} vs {{ this.enemy_champ }}
+        
+### Game info
+        
+{{#if this.win }}Win{{else}}Loss{{/if}}: {{ this.kda.kills }}/{{ this.kda.deaths }}/{{ this.kda.assists }}
+        
+Duration: {{ this.duration }}
+        
+### Matchup Notes: 
+        
+- _Start typing here._
+        
+### Game Notes:
+        
+1. _Start typing here._
+        
+{{ /each }}"#)
         .expect("Couldn't find template file");
 
     let now = chrono::offset::Local::now();
@@ -57,6 +76,6 @@ async fn main() {
         Err(why) => panic!("Failed to create output file {}: {}", &path.display(), why),
         Ok(f) => f,
     };
-    let _ = handlebars.render_to_write("template", &data, &output_file);
+    let _ = handlebars.render_to_write("normal", &data, &output_file);
     println!("Generated {}", path.display());
 }
