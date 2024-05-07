@@ -6,6 +6,10 @@ Application to automatically generate documents (markdown documents, for now) fo
 
 Just run the `.exe`-file that you can download at the [releases page](https://github.com/sackidude/league-journal/releases).
 
+**username-tag#region** 
+
+This is the structure. My account: Nils Juto-kiss#EUW would be `username=Nils Juto` `tag=kiss` `region=euw`
+
 The instruction are pretty clear. Put the executable file where you want the notes to be generated. 
 
 If you encounter any issues please report them over at the [issues page](https://github.com/sackidude/league-journal/issues) and I'll try to help.
